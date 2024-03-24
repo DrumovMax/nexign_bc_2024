@@ -43,17 +43,23 @@ public class UdrService {
 
         List<Udr> udrList = groupedUdrs(cdrList).values().stream().toList();
         udrToJson(dirReportName + "/annual_report_2023.json", udrList);
+
+        printTableOfUdrForEverySubs(udrList);
     }
 
     public void generateReport (Long msisdn) {
-        List<CDR> cdrList = new ArrayList<>();
+        List<Udr> udrList = new ArrayList<>();
         for (int i = 1; i <= 12; i++) {
-            cdrList.addAll(readCDRFiles(i));
+            int month = i;
+            groupedUdrs(readCDRFiles(i)).values().stream()
+                    .filter(udr -> udr.getMsisdn().equals(msisdn)).findFirst()
+                    .ifPresent(udr -> {
+                        udrList.add(udr);
+                        udrToJson("%s/%d_month_report_%d_2023.json".formatted(dirReportName, month, msisdn), List.of(udr));
+                    });
         }
-        groupedUdrs(cdrList).values().stream()
-                .filter(udr -> udr.getMsisdn().equals(msisdn)).findFirst()
-                .ifPresent(udr ->
-                        udrToJson("%s/annual_report_%d_2023.json".formatted(dirReportName, msisdn), List.of(udr)));
+
+        printTableOfUdrForEveryMonth(udrList);
 
     }
 
@@ -63,7 +69,12 @@ public class UdrService {
         groupedUdrs(cdrList).values().stream()
                 .filter(udr -> udr.getMsisdn().equals(msisdn)).findFirst()
                 .ifPresent(udr ->
-                        udrToJson("%s/month_%d_report_%d_2023.json".formatted(dirReportName, month, msisdn), List.of(udr)));
+                {
+                    printTableOfUdrForOneMonth(udr, month);
+                    udrToJson("%s/month_%d_report_%d_2023.json".formatted(dirReportName, month, msisdn), List.of(udr));
+                });
+
+
     }
 
     private Map<Long, Udr> groupedUdrs (List<CDR> cdrList) {
@@ -143,5 +154,44 @@ public class UdrService {
         }
 
         return listCDR;
+    }
+
+
+    public String timeToString(long secs) {
+        return "%02d:%02d:%02d".formatted(secs / 3600, secs / 60 % 60, secs % 60);
+    }
+
+    private void printTableOfUdrForEveryMonth(List<Udr> udrList) {
+        System.out.println("Абонент\t\tМесяц\t\tИсходящие\tВходящие");
+
+        for (int i = 0; i < 12; i++) {
+            Udr curerntUdr = udrList.get(i);
+            System.out.printf("%d\t\t%d\t\t%s\t\t%s\n",
+                    curerntUdr.getMsisdn(),
+                    i + 1,
+                    timeToString(curerntUdr.getOutcomingCall().getTotalTime()),
+                    timeToString(curerntUdr.getIncomingCall().getTotalTime()));
+        }
+    }
+
+    private void printTableOfUdrForOneMonth(Udr curerntUdr, int index) {
+        System.out.println("Абонент\t\tМесяц\t\tИсходящие\tВходящие");
+        System.out.printf("%d\t\t%d\t\t%s\t\t%s\n",
+                    curerntUdr.getMsisdn(),
+                    index,
+                    timeToString(curerntUdr.getOutcomingCall().getTotalTime()),
+                    timeToString(curerntUdr.getIncomingCall().getTotalTime()));
+
+    }
+
+    private void printTableOfUdrForEverySubs (List<Udr> udrList) {
+        System.out.println("Абонент\t\tИсходящие\t\tВходящие");
+
+        for (Udr curerntUdr : udrList) {
+            System.out.printf("%d\t\t%s\t\t%s\n",
+                    curerntUdr.getMsisdn(),
+                    timeToString(curerntUdr.getOutcomingCall().getTotalTime()),
+                    timeToString(curerntUdr.getIncomingCall().getTotalTime()));
+        }
     }
 }
