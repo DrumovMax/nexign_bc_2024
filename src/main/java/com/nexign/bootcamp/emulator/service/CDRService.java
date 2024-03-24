@@ -1,12 +1,14 @@
 package com.nexign.bootcamp.emulator.service;
 
 import com.nexign.bootcamp.emulator.model.CDR;
+import com.nexign.bootcamp.emulator.model.CallType;
 import com.nexign.bootcamp.emulator.model.Subscriber;
 import com.nexign.bootcamp.emulator.repository.CDRRepository;
 import com.nexign.bootcamp.emulator.repository.SubscriberRepository;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,7 +16,6 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.ParseException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -35,34 +36,12 @@ public class CDRService {
 
     Logger log = LoggerFactory.getLogger(CDRService.class);
 
-    public void initCDRFiles() {
-        try {
-            Path directory = Paths.get("cdr_files");
-            if (Files.exists(directory)) {
-                deleteDirectory(directory);
-            }
-            for (int i = 1; i <= 12; i++) {
-                String pathname = "cdr_files/cdr_" + i + ".txt";
-                File file = new File(pathname);
-                if (file.getParentFile() != null && !file.getParentFile().exists()) {
-                    if (file.getParentFile().mkdir()) {
-                        System.out.println("Recreate directory");
-                    }
-                }
-                if (file.createNewFile()) {
-                    System.out.println("Create file " + pathname);
-                }
-            }
-        } catch (IOException e) {
-            log.error("Ошибка при создании файла: " + e.getMessage());
-        }
-    }
+    @Value("${directory.cdr.name}")
+    private String dirName;
 
     private long countNextUnixTimeMonth (long currentUnixTime) {
         LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(currentUnixTime), ZoneOffset.UTC);
-
         LocalDateTime newDateTime = dateTime.plusMonths(1);
-        System.out.println(newDateTime);
 
         return newDateTime.toEpochSecond(ZoneOffset.UTC);
     }
@@ -81,8 +60,26 @@ public class CDRService {
     }
 
 
+    private CallType randCallType () {
+        Random random = new Random();
+         if (0 == random.nextInt(2)) {
+             return CallType.INCOMING;
+         } else {
+             return CallType.OUTCOMING;
+         }
+    }
+
+    private int callTypeToInt (CallType callType) {
+        return CallType.INCOMING.equals(callType) ? 1 : 2;
+    }
+
     @Transactional
     public void emulateSwitch () {
+        try {
+            if (!Files.exists(Paths.get(dirName))) Files.createDirectory(Paths.get(dirName));
+        } catch (IOException e) {
+            log.error("Fail to create directory: " + dirName);
+        }
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm:ss");
         LocalDateTime dateTime = LocalDateTime.parse("01/01/2023 00:00:00", formatter);
         dateTime = dateTime.atOffset(ZoneOffset.UTC).toLocalDateTime();
@@ -94,11 +91,20 @@ public class CDRService {
         List<CDR> cdrList = new ArrayList<>();
         List<Long> subscribers = subscriberRepository.findAll().stream().map(Subscriber::getPhoneNumber).toList();
         for (int i = 1; i <= 12; i++) {
-            try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("cdr_files/cdr_" + i + ".txt", true)))) {
+            String pathFileString = dirName + "/cdr_" + i + "_2023.txt";
+            Path pathFile = Paths.get(pathFileString);
+
+            try {
+                if (!Files.exists(pathFile)) Files.createFile(pathFile);
+            } catch (IOException e) {
+                log.error("Fail to create file: " + pathFile);
+            }
+
+            try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(pathFileString, true)))) {
                 while (currentUnixTime < nextMonthUnixTime) {
 
                     CDR cdr = CDR.builder()
-                            .callType(random.nextInt(2) + 1)
+                            .callType(randCallType())
                             .callerNumber(subscribers.get(random.nextInt(subscribers.size())))
                             .startTime(currentUnixTime)
                             .endTime(randCallTime(currentUnixTime))
@@ -108,7 +114,11 @@ public class CDRService {
 
                     out.println("""
                             0%d,%d,%d,%d
-                            """.formatted(cdr.getCallType(), cdr.getCallerNumber(), cdr.getStartTime(), cdr.getEndTime()));
+                            """.formatted(
+                                    callTypeToInt(cdr.getCallType()),
+                                    cdr.getCallerNumber(),
+                                    cdr.getStartTime(),
+                                    cdr.getEndTime()));
                     currentUnixTime = randNextCall(currentUnixTime, nextMonthUnixTime);
                 }
                 cdrRepository.saveAll(cdrList);
