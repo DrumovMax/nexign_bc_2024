@@ -6,6 +6,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Represents a Call Detail Record (CDR) entity storing information about a call.
+ */
 @Data
 @Builder
 @Entity

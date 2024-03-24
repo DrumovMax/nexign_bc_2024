@@ -4,6 +4,9 @@ package com.nexign.bootcamp.emulator.model;
 import jakarta.persistence.*;
 import lombok.Data;
 
+/**
+ * Represents a subscriber entity with a unique identifier and phone number.
+ */
 @Data
 @Entity
 @Table(name = "subscriber")

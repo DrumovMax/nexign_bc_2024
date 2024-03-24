@@ -26,19 +26,41 @@ import java.util.Random;
 
 import static org.apache.commons.io.file.PathUtils.deleteDirectory;
 
+/**
+ * Service for emulating Call Detail Records (CDR) data and persisting it to files and database.
+ */
 @Service
 public class CDRService {
+
+    /**
+     * Repository for managing CDR entities.
+     */
     @Resource
     private CDRRepository cdrRepository;
 
+    /**
+     * Repository for managing subscriber entities.
+     */
     @Resource
     private SubscriberRepository subscriberRepository;
 
+    /**
+     * Logger for the CDRService class.
+     */
     Logger log = LoggerFactory.getLogger(CDRService.class);
 
+    /**
+     * Directory name where CDR files are saved.
+     */
     @Value("${directory.cdr.name}")
     private String dirName;
 
+    /**
+     * Calculates the Unix time for the start of the next month.
+     *
+     * @param currentUnixTime Unix time for the current month
+     * @return Unix time for the start of the next month
+     */
     private long countNextUnixTimeMonth (long currentUnixTime) {
         LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(currentUnixTime), ZoneOffset.UTC);
         LocalDateTime newDateTime = dateTime.plusMonths(1);
@@ -46,6 +68,13 @@ public class CDRService {
         return newDateTime.toEpochSecond(ZoneOffset.UTC);
     }
 
+    /**
+     * Generates a random Unix time for the next call within the same month.
+     *
+     * @param prevCallUnixTime   Unix time for the previous call
+     * @param limitMonthUnixTime Unix time limit for the current month
+     * @return random Unix time for the next call
+     */
     private long randNextCall (long prevCallUnixTime, long limitMonthUnixTime) {
         int min = 28800, max = 57600;
         Random random = new Random();
@@ -54,12 +83,22 @@ public class CDRService {
         return Math.min(newCallUnixTime, limitMonthUnixTime);
     }
 
+    /**
+     * Generates a random call time based on the start call Unix time.
+     *
+     * @param startCallUnixTime Unix time for the start of the call
+     * @return random call end time
+     */
     private long randCallTime (long startCallUnixTime) {
         Random random = new Random();
         return startCallUnixTime + random.nextInt(1800);
     }
 
-
+    /**
+     * Generates a random call type (incoming or outcoming).
+     *
+     * @return random call type
+     */
     private CallType randCallType () {
         Random random = new Random();
          if (0 == random.nextInt(2)) {
@@ -69,10 +108,19 @@ public class CDRService {
          }
     }
 
+    /**
+     * Converts a call type enum to its corresponding integer representation.
+     *
+     * @param callType call type enum
+     * @return integer representation of the call type (1 for incoming, 2 for outgoing)
+     */
     private int callTypeToInt (CallType callType) {
         return CallType.INCOMING.equals(callType) ? 1 : 2;
     }
 
+    /**
+     * Emulates the switching system by generating and persisting mock CDR data.
+     */
     @Transactional
     public void emulateSwitch () {
         try {

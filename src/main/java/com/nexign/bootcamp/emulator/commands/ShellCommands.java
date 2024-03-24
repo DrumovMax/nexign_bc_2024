@@ -10,16 +10,28 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+/**
+ * Component containing shell commands for interacting with the emulator system.
+ */
 @Service
 @ShellComponent
 public class ShellCommands {
 
+    /**
+     * Service for generating UDR reports.
+     */
     @Resource
     private UdrService udrService;
 
+    /**
+     * Repository for managing subscriber entities.
+     */
     @Resource
     private SubscriberRepository subscriberRepository;
 
+    /**
+     * Displays all subscribers from the database.
+     */
     @ShellMethod(value = "Display all subscribers from the database", key = "subs")
     public void subs() {
         System.out.println("Current subscribers:");
@@ -29,6 +41,11 @@ public class ShellCommands {
         });
     }
 
+    /**
+     * Generates a report for all subscribers for the entire year.
+     *
+     * @return a message indicating the success of the operation
+     */
     @ShellMethod(value = """
             
             \tGenerate a report for all subscribers for the entire year
@@ -41,6 +58,12 @@ public class ShellCommands {
         return "Success";
     }
 
+    /**
+     * Generates a report for a subscriber by phone number for the entire year.
+     *
+     * @param msisdn the phone number of the subscriber
+     * @return a message indicating the success of the operation or if the subscriber is not found
+     */
     @ShellMethod(value = """
             
             \tGenerate a report for a subscriber by phone number for the entire year
@@ -61,6 +84,13 @@ public class ShellCommands {
         return "Success";
     }
 
+    /**
+     * Generates a report for a subscriber by phone number and month for the entire year.
+     *
+     * @param msisdn the phone number of the subscriber
+     * @param month  the month for which the report is generated
+     * @return a message indicating the success of the operation or if the subscriber is not found
+     */
     @ShellMethod(value =
             """
                     

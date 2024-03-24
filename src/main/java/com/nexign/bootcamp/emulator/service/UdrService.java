@@ -19,22 +19,43 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Service for handling CDR (Call Detail Records) data and generating reports.
+ */
 @Service
 public class UdrService {
 
+    /**
+     * Logger for the UdrService class.
+     */
     Logger log = LoggerFactory.getLogger(UdrService.class);
 
+    /**
+     * Directory name containing CDR files.
+     */
     @Value("${directory.cdr.name}")
     private String dirCDRName;
 
+    /**
+     * Directory name where reports are saved.
+     */
     @Value("${directory.report.name}")
     private String dirReportName;
 
+    /**
+     * Reads CDR files and returns a list of CDRs.
+     *
+     * @param index number month of the CDR file
+     * @return list of CDRs
+     */
     private List<CDR> readCDRFiles(int index) {
         String pathFile = dirCDRName + "/cdr_" + index + "_2023.txt";
         return readFileCDRToListCDR(pathFile);
     }
 
+    /**
+     * Generates an annual report based on CDR data for the entire year.
+     */
     public void generateReport () {
         List<CDR> cdrList = new ArrayList<>();
         for (int i = 1; i <= 12; i++) {
@@ -47,6 +68,11 @@ public class UdrService {
         printTableOfUdrForEverySubs(udrList);
     }
 
+    /**
+     * Generates a report for a given subscriber based on CDR data for the entire year.
+     *
+     * @param msisdn subscriber number
+     */
     public void generateReport (Long msisdn) {
         List<Udr> udrList = new ArrayList<>();
         for (int i = 1; i <= 12; i++) {
@@ -63,6 +89,12 @@ public class UdrService {
 
     }
 
+    /**
+     * Generates a report for a given subscriber for the specified month based on CDR data.
+     *
+     * @param msisdn subscriber number
+     * @param month  month (1-12)
+     */
     public void generateReport (Long msisdn, int month) {
         List<CDR> cdrList = new ArrayList<>(readCDRFiles(month));
 
@@ -77,6 +109,12 @@ public class UdrService {
 
     }
 
+    /**
+     * Groups CDR data by subscriber number and creates a list of UDRs.
+     *
+     * @param cdrList list of CDRs
+     * @return Map, where key - subscriber number, value - UDR object
+     */
     private Map<Long, Udr> groupedUdrs (List<CDR> cdrList) {
         return cdrList.stream()
             .collect(Collectors.toMap(
@@ -97,6 +135,12 @@ public class UdrService {
                             .build()));
     }
 
+    /**
+     * Converts a list of UDR objects to JSON and saves it to a file.
+     *
+     * @param pathOfFile path to the file where JSON is saved
+     * @param udrList    list of UDR objects
+     */
     private void udrToJson (String pathOfFile, List<Udr> udrList) {
         Path pathDirectory = Paths.get(dirReportName);
         Path pathFile = Paths.get(pathOfFile);
@@ -126,9 +170,22 @@ public class UdrService {
         }
     }
 
+    /**
+     * Converts a string representation of a call type to the corresponding {@link CallType} object.
+     *
+     * @param callTypeString string representation of the call type ("01" - incoming, otherwise - outgoing)
+     * @return call type {@link CallType}
+     */
     private CallType stringToCallType (String callTypeString) {
         return callTypeString.equals("01") ? CallType.INCOMING : CallType.OUTCOMING;
     }
+
+    /**
+     * Reads a CDR file and returns a list of CDR objects.
+     *
+     * @param fileName CDR file name
+     * @return list of CDR objects
+     */
     public List<CDR> readFileCDRToListCDR (String fileName) {
         List<CDR> listCDR = new ArrayList<>();
 
@@ -156,11 +213,21 @@ public class UdrService {
         return listCDR;
     }
 
-
+    /**
+     * Converts time in seconds to a string representation of time in the format "hh:mm:ss".
+     *
+     * @param secs time in seconds
+     * @return string representation of time
+     */
     public String timeToString(long secs) {
         return "%02d:%02d:%02d".formatted(secs / 3600, secs / 60 % 60, secs % 60);
     }
 
+    /**
+     * Prints the UDR table for each month.
+     *
+     * @param udrList list of UDR objects
+     */
     private void printTableOfUdrForEveryMonth(List<Udr> udrList) {
         System.out.println("Абонент\t\tМесяц\t\tИсходящие\tВходящие");
 
@@ -174,16 +241,27 @@ public class UdrService {
         }
     }
 
-    private void printTableOfUdrForOneMonth(Udr curerntUdr, int index) {
+    /**
+     * Prints the UDR table for the specified month.
+     *
+     * @param currentUdr UDR object for the specified month
+     * @param index      month number (1-12)
+     */
+    private void printTableOfUdrForOneMonth(Udr currentUdr, int index) {
         System.out.println("Абонент\t\tМесяц\t\tИсходящие\tВходящие");
         System.out.printf("%d\t\t%d\t\t%s\t\t%s\n",
-                    curerntUdr.getMsisdn(),
+                    currentUdr.getMsisdn(),
                     index,
-                    timeToString(curerntUdr.getOutcomingCall().getTotalTime()),
-                    timeToString(curerntUdr.getIncomingCall().getTotalTime()));
+                    timeToString(currentUdr.getOutcomingCall().getTotalTime()),
+                    timeToString(currentUdr.getIncomingCall().getTotalTime()));
 
     }
 
+    /**
+     * Prints the UDR table for each subscriber.
+     *
+     * @param udrList list of UDR objects
+     */
     private void printTableOfUdrForEverySubs (List<Udr> udrList) {
         System.out.println("Абонент\t\tИсходящие\t\tВходящие");
 
