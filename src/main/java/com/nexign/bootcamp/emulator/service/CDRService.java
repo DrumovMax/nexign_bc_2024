@@ -76,7 +76,12 @@ public class CDRService {
     @Transactional
     public void emulateSwitch () {
         try {
-            if (!Files.exists(Paths.get(dirName))) Files.createDirectory(Paths.get(dirName));
+            if (!Files.exists(Paths.get(dirName))) {
+                Files.createDirectory(Paths.get(dirName));
+            } else {
+                deleteDirectory(Paths.get(dirName));
+                Files.createDirectory(Paths.get(dirName));
+            }
         } catch (IOException e) {
             log.error("Fail to create directory: " + dirName);
         }
