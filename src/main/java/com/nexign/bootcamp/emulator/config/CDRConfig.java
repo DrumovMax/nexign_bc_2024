@@ -18,11 +18,11 @@ public class CDRConfig {
 
     @Bean(initMethod = "subs")
     public ShellCommands initMessage () {
-        System.out.println("======================================");
-        System.out.println("|                                    |");
-        System.out.println("|   Call help, to explore commands   |");
-        System.out.println("|                                    |");
-        System.out.println("======================================");
+        System.out.println("==============================================");
+        System.out.println("|                                            |");
+        System.out.println("|   Call command help, to explore commands   |");
+        System.out.println("|                                            |");
+        System.out.println("==============================================");
         return new ShellCommands();
     }
 
