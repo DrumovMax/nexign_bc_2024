@@ -119,8 +119,8 @@ public class UdrService {
 
         String json = gson.toJson(udrList);
 
-        try (BufferedWriter br = new BufferedWriter(new FileWriter(pathOfFile))) {
-            br.write(json);
+        try (FileWriter fileWriter = new FileWriter(pathOfFile)) {
+            fileWriter.write(json);
         } catch (IOException e) {
             log.error("Error when writing Json to a file: " + pathOfFile);
         }
