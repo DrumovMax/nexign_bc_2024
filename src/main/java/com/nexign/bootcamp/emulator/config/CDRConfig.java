@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class DatabaseConfig {
+public class CDRConfig {
 
     @Bean(initMethod = "initSubs")
     public InitBean initSubscriber () {
@@ -18,7 +18,11 @@ public class DatabaseConfig {
 
     @Bean(initMethod = "subs")
     public ShellCommands initMessage () {
-        System.out.println("Call help, to explore commands");
+        System.out.println("======================================");
+        System.out.println("|                                    |");
+        System.out.println("|   Call help, to explore commands   |");
+        System.out.println("|                                    |");
+        System.out.println("======================================");
         return new ShellCommands();
     }
 

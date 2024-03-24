@@ -5,9 +5,6 @@ import com.nexign.bootcamp.emulator.service.SubscriberService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Component;
 
-import java.text.ParseException;
-
-
 @Component
 public class InitBean {
 
@@ -22,8 +19,6 @@ public class InitBean {
         subscriberService.initSubs();
     }
 
-    public void initCDRFiles() { cdrService.initCDRFiles(); }
-
-    public void startEmulate () throws ParseException { cdrService.emulateSwitch(); }
+    public void startEmulate () { cdrService.emulateSwitch(); }
 
 }
