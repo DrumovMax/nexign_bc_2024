@@ -1,4 +1,4 @@
-# Тестовое заданеи для Nexign Bootcamp 2024
+# Тестовое задание для Nexign Bootcamp 2024
 Инструменты:
 1. OpenJDK 17
 2. maven/gradle
